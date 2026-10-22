@@ -67,7 +67,8 @@ jobs:
           set -e
           nohup java -jar backend/target/learnsphere-backend-0.4.0-SNAPSHOT.jar > "$RUNNER_TEMP/learnsphere-backend.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/learnsphere-backend.pid"
-          (cd frontend && nohup npm run dev -- --host 127.0.0.1 > "$RUNNER_TEMP/learnsphere-vite.log" 2>&1 &)
+          nohup npm --prefix frontend run dev -- --host 127.0.0.1 > "$RUNNER_TEMP/learnsphere-vite.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/learnsphere-vite.pid"
       - name: Exercise application over HTTP
         run: python3 tools/application_smoke_test.py
       - name: Upload diagnostic logs on failure
