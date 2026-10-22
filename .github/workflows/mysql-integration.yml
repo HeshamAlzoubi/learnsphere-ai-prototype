@@ -1,0 +1,55 @@
+name: LearnSphere AI - MySQL Integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/mysql-integration.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/mysql-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mysql-integration:
+    name: Flyway and JPA Persistence on MySQL 8.4
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_only
+          MYSQL_DATABASE: learnsphere_ci
+          MYSQL_USER: learnsphere_ci
+          MYSQL_PASSWORD: ci_ephemeral_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci_root_only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      LEARN_MYSQL_IT: 'true'
+      LEARN_DB_URL: jdbc:mysql://127.0.0.1:3306/learnsphere_ci
+      LEARN_DB_USER: learnsphere_ci
+      LEARN_DB_PASSWORD: ci_ephemeral_only
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Run MySQL-only integration tests
+        working-directory: backend
+        run: mvn --batch-mode --no-transfer-progress -Dtest=MySqlPersistenceIntegrationTest test
