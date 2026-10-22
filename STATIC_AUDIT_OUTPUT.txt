@@ -1,0 +1,15 @@
+PASS: pom.xml parses as XML
+PASS: default deny rule present
+PASS: no unrestricted lesson subtree matcher
+PASS: specific lesson assessment permitted
+PASS: demo submissions permitted only via POST
+PASS: synthetic data warning in policy
+PASS: database migration present
+PASS: backend security integration tests present
+PASS: frontend package metadata present
+PASS: Vite backend proxy configured
+PASS: Spring binds to loopback by default
+PASS: test datasource configured
+
+Static checks: 12/12 passed
+NOTE: This does not execute Maven, JUnit, React, Vite, or database tests.

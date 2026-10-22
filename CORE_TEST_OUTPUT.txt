@@ -1,0 +1,5 @@
+Command: python tools/verify_core.py
+Exit code: 0
+Running: javac
+Running: java
+PASS: 21 policy assertions

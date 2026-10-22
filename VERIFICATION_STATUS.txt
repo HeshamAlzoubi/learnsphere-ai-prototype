@@ -1,0 +1,1 @@
+Increment 11: JDK core tests executed (see CORE_TEST_OUTPUT.txt). Full Maven, frontend and MySQL verification not executed.
