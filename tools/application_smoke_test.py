@@ -11,7 +11,7 @@ FRONTEND = 'http://127.0.0.1:5173'
 
 def fetch(base, path, payload=None):
     body = json.dumps(payload).encode() if payload is not None else None
-    headers = {'Accept': 'application/json'}
+    headers = {'Accept': 'text/html' if base == FRONTEND and path == '/' else 'application/json'}
     if body is not None:
         headers['Content-Type'] = 'application/json'
     req = Request(base + path, data=body, headers=headers, method='POST' if body else 'GET')
