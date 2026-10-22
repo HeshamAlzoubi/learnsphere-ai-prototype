@@ -1,0 +1,103 @@
+name: LearnSphere AI - Browser E2E Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/browser-e2e.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    name: Chromium learner journey with Spring Boot and MySQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_only
+          MYSQL_DATABASE: learnsphere_ci
+          MYSQL_USER: learnsphere_ci
+          MYSQL_PASSWORD: ci_ephemeral_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci_root_only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      LEARN_DB_URL: jdbc:mysql://127.0.0.1:3306/learnsphere_ci
+      LEARN_DB_USER: learnsphere_ci
+      LEARN_DB_PASSWORD: ci_ephemeral_only
+      LEARN_BIND_ADDRESS: 127.0.0.1
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build backend
+        working-directory: backend
+        run: mvn --batch-mode --no-transfer-progress -DskipTests package
+      - name: Install frontend and Playwright
+        working-directory: frontend
+        run: |
+          npm ci
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+          npm run build
+      - name: Start backend and frontend
+        run: |
+          nohup java -jar backend/target/learnsphere-backend-0.4.0-SNAPSHOT.jar > "$RUNNER_TEMP/learnsphere-backend.log" 2>&1 &
+          cd frontend
+          nohup ./node_modules/.bin/vite --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/learnsphere-vite.log" 2>&1 &
+      - name: Wait for services
+        run: |
+          python3 - <<'PY'
+          import time
+          from urllib.request import Request, urlopen
+          endpoints = [('backend', 'http://127.0.0.1:8080/api/v1/lessons', 'application/json'), ('frontend', 'http://127.0.0.1:5173/', 'text/html')]
+          for name, url, accept in endpoints:
+              for attempt in range(90):
+                  try:
+                      with urlopen(Request(url, headers={'Accept': accept}), timeout=5) as response:
+                          if response.status == 200:
+                              print(f'{name} ready', flush=True)
+                              break
+                  except Exception:
+                      pass
+                  time.sleep(2)
+              else:
+                  raise SystemExit(f'{name} did not become ready')
+          PY
+      - name: Run Playwright Chromium tests
+        working-directory: frontend
+        run: npx playwright test
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-diagnostics
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            ${{ runner.temp }}/learnsphere-backend.log
+            ${{ runner.temp }}/learnsphere-vite.log
+          if-no-files-found: ignore
