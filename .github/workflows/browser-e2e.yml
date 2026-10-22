@@ -59,7 +59,7 @@ jobs:
       - name: Install frontend and Playwright
         working-directory: frontend
         run: |
-          npm ci
+          npm install
           npm install --no-save @playwright/test@1.56.1
           npx playwright install --with-deps chromium
           npm run build
