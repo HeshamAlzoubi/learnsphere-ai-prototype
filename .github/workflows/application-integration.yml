@@ -71,9 +71,22 @@ jobs:
           echo $! > "$RUNNER_TEMP/learnsphere-backend.pid"
 
           cd frontend
-          nohup npm run dev -- --host 127.0.0.1 \
+
+          nohup ./node_modules/.bin/vite \
+            --host 127.0.0.1 \
+            --port 5173 \
+            --strictPort \
             > "$RUNNER_TEMP/learnsphere-vite.log" 2>&1 &
+
           echo $! > "$RUNNER_TEMP/learnsphere-vite.pid"
+
+          sleep 5
+
+          echo "Vite startup log:"
+          cat "$RUNNER_TEMP/learnsphere-vite.log"
+
+          echo "Vite HTTP response:"
+          curl -i --max-time 10 http://127.0.0.1:5173/ || true
       - name: Diagnose Vite HTTP response
         run: |
           echo "Frontend files:"
