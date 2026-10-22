@@ -20,17 +20,37 @@ def fetch(base, path, payload=None):
         return resp.status, resp.headers.get('Content-Type', ''), data
 
 def wait_for(base, path, label):
-    for _ in range(90):
+    last_error = 'No response received'
+
+    for attempt in range(90):
         try:
             status, _, _ = fetch(base, path)
+
             if status == 200:
                 print('READY:', label, flush=True)
                 return
-        except (HTTPError, URLError, TimeoutError, ConnectionError):
-            pass
-        time.sleep(2)
-    raise AssertionError(f'{label} did not become ready within 180 seconds')
 
+            last_error = f'HTTP {status}'
+
+        except HTTPError as exc:
+            last_error = f'HTTP {exc.code}: {exc.reason}'
+
+        except (URLError, TimeoutError, ConnectionError) as exc:
+            last_error = str(exc)
+
+        if attempt % 10 == 0:
+            print(
+                f'WAITING: {label} at {base + path}; '
+                f'last error: {last_error}',
+                flush=True
+            )
+
+        time.sleep(2)
+
+    raise AssertionError(
+        f'{label} did not become ready within 180 seconds. '
+        f'Last error: {last_error}'
+    )
 def api(path, payload=None):
     status, content_type, body = fetch(FRONTEND, '/api/v1' + path, payload)
     assert status == 200, f'{path}: HTTP {status}'
