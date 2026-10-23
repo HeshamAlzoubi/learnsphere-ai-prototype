@@ -11,9 +11,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   demoProgress: () => request<DemoProgress>('/demo-progress'),
   /** Caller supplies a trusted identity-provider access token; never store it in browser storage. */
-  ownAttempts: (accessToken: string) => {
+  ownAttempts: (accessToken: string, signal?: AbortSignal) => {
     if (!accessToken || !accessToken.trim()) throw new ApiError('Sign in is required to view learner history.', 401);
-    return request<LearnerAttempt[]>('/learner/me/attempts', { headers: { Authorization: `Bearer ${accessToken}` } });
+    return request<LearnerAttempt[]>('/learner/me/attempts', { signal, headers: { Authorization: `Bearer ${accessToken}` } });
   },
   lessons: () => request<Lesson[]>('/lessons'),
   lesson: (id: string) => request<Lesson>(`/lessons/${encodeURIComponent(id)}`),
