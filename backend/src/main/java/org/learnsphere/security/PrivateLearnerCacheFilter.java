@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Defense-in-depth: private learner responses must not be stored by browsers
+ * Defense-in-depth: private learner and account responses must not be stored by browsers
  * or intermediary caches, including authorization errors.
  */
 @Component
@@ -20,7 +20,8 @@ public class PrivateLearnerCacheFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return !(path.equals("/api/v1/learner") || path.startsWith("/api/v1/learner/"));
+        return !(path.equals("/api/v1/learner") || path.startsWith("/api/v1/learner/")
+                || path.equals("/api/v1/account") || path.startsWith("/api/v1/account/"));
     }
 
     @Override
