@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -50,7 +51,7 @@ public class DemoAccessPolicy {
                 return roles.stream()
                     .filter(String.class::isInstance).map(String.class::cast)
                     .filter(role -> role.equals("LEARNER") || role.equals("EDUCATOR") || role.equals("ADMIN"))
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                    .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
                     .toList();
             });
             http.oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)));
