@@ -36,3 +36,7 @@ The signed-JWT authorization regression suite and the trusted-provider integrati
 ## Milestone 17 — private account cache protection
 
 Protected account identity responses now receive the same server-side no-store cache headers as private learner history. See [Milestone 17 verification notes](docs/MILESTONE_17_ACCOUNT_CACHE_PROTECTION.md). This does not introduce live sign-in or real learner records.
+
+## Milestone 18 — default-deny verification
+
+Full-Spring HTTP regression tests confirm protected identity routes remain closed by default, including when supplied an arbitrary bearer token, while the synthetic demo stays accessible. See [Milestone 18 verification](docs/MILESTONE_18_DEFAULT_DENY_VERIFICATION.md).
