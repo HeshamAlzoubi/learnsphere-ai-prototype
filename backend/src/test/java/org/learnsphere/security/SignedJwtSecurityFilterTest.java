@@ -92,6 +92,35 @@ class SignedJwtSecurityFilterTest {
             .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
     }
 
+
+    private String signedTokenWithSubject(String subject) throws Exception {
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .issuer(ISSUER)
+                .subject(subject)
+                .audience(AUDIENCE)
+                .issueTime(Date.from(Instant.now().minusSeconds(30)))
+                .expirationTime(Date.from(Instant.now().plusSeconds(600)))
+                .claim("roles", List.of("LEARNER"))
+                .build();
+        SignedJWT jwt = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(TRUSTED_KEY.getKeyID()).build(), claims);
+        jwt.sign(new RSASSASigner(TRUSTED_KEY.toPrivateKey()));
+        return jwt.serialize();
+    }
+
+    @Test void missingSubjectIsRejectedEvenWithValidSignatureAndRole() throws Exception {
+        mvc.perform(get("/api/v1/account/me")
+                .header("Authorization", "Bearer " + signedTokenWithSubject(null)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+    @Test void blankSubjectIsRejectedEvenWithValidSignatureAndRole() throws Exception {
+        mvc.perform(get("/api/v1/account/me")
+                .header("Authorization", "Bearer " + signedTokenWithSubject("   ")))
+            .andExpect(status().isUnauthorized());
+    }
+
     @Test void wrongAudienceRejected() throws Exception {
         String token = signedToken(TRUSTED_KEY, ISSUER, "different-api",
                 Instant.now().plusSeconds(600), List.of("LEARNER"));
