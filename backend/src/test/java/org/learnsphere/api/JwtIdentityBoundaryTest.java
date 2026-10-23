@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
@@ -26,7 +27,7 @@ class JwtIdentityBoundaryTest {
 
     @Test void learnerCanReadOnlyOwnTokenIdentity() throws Exception {
         mvc.perform(get("/api/v1/account/me").with(jwt().jwt(j -> j.subject("synthetic-learner-001")
-                .claim("roles", List.of("LEARNER")))))
+                .claim("roles", List.of("LEARNER"))).authorities(new SimpleGrantedAuthority("ROLE_LEARNER"))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.subject").value("synthetic-learner-001"))
             .andExpect(jsonPath("$.roles[0]").value("LEARNER"));
@@ -34,14 +35,14 @@ class JwtIdentityBoundaryTest {
 
     @Test void unrecognizedRoleIsRejected() throws Exception {
         mvc.perform(get("/api/v1/account/me").with(jwt().jwt(j -> j.subject("synthetic-guest")
-                .claim("roles", List.of("GUEST")))))
+                .claim("roles", List.of("GUEST"))).authorities())
             .andExpect(status().isForbidden());
     }
 
     @Test void validEducatorStillCannotReadUnimplementedLearnerProgress() throws Exception {
         mvc.perform(get("/api/v1/learners/learner-002/progress")
                 .with(jwt().jwt(j -> j.subject("synthetic-educator-001")
-                    .claim("roles", List.of("EDUCATOR")))))
+                    .claim("roles", List.of("EDUCATOR"))).authorities(new SimpleGrantedAuthority("ROLE_EDUCATOR"))))
             .andExpect(status().isForbidden());
     }
 
