@@ -1,6 +1,7 @@
 package org.learnsphere.service;
 import org.learnsphere.api.DemoProgressDto;
 import org.learnsphere.catalog.DemoCatalog;
+import org.learnsphere.core.ProgressTrendPolicy;
 import org.learnsphere.persistence.DemoAttemptEntity;
 import org.learnsphere.persistence.DemoAttemptRepository;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,9 @@ public class DemoProgressService {
    Integer percentage=latest==null?null:latest.getPercentage().intValue();
    String band=latest==null?null:latest.getRecommendation();
    String action=band==null?"START_LESSON":switch(band){case "REINFORCE"->"REVIEW_LESSON";case "PRACTICE"->"RETRY_ASSESSMENT";case "ADVANCE"->"EXPLORE_NEXT_LESSON";default->"REVIEW_LESSON";};
-   summaries.add(new DemoProgressDto.LessonProgress(lesson.id(),lesson.title(),history.size(),percentage,band,action));
+   Integer previous = history.size() < 2 ? null : history.get(1).getPercentage().intValue();
+   String recentTrend = ProgressTrendPolicy.classify(percentage, previous);
+   summaries.add(new DemoProgressDto.LessonProgress(lesson.id(),lesson.title(),history.size(),percentage,band,action,recentTrend));
   });
   return new DemoProgressDto(attempts.size(),List.copyOf(summaries));
  }
