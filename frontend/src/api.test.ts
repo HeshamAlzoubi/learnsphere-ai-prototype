@@ -27,4 +27,22 @@ describe('API client response handling', () => {
   await api.submit('assessment-001', [{ questionId: 'q1', optionId: 'b' }]);
   expect(fetch).toHaveBeenCalledWith('/api/v1/assessments/assessment-001/submissions', expect.objectContaining({ method: 'POST', body: JSON.stringify({ answers: [{ questionId: 'q1', optionId: 'b' }] }) }));
  });
+ it('requests only authenticated own-attempt history using a bearer token', async () => {
+  const attempts = [{ assessmentId: 'assessment-001', correct: 2, total: 3, percentage: 66.67, recommendation: 'PRACTICE', createdAt: '2026-01-01T00:00:00Z' }];
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => attempts }));
+  await expect(api.ownAttempts('synthetic-access-token')).resolves.toEqual(attempts);
+  expect(fetch).toHaveBeenCalledWith('/api/v1/learner/me/attempts', expect.objectContaining({
+   headers: expect.objectContaining({ Authorization: 'Bearer synthetic-access-token' })
+  }));
+ });
+ it('does not request learner data without an access token', async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+  expect(() => api.ownAttempts('')).toThrowError(ApiError);
+  expect(fetchMock).not.toHaveBeenCalled();
+ });
+ it('shows safe access-denied messaging for learner history', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+  await expect(api.ownAttempts('synthetic-access-token')).rejects.toMatchObject({ status: 403, message: 'You do not have access to this learner history.' });
+ });
 });
