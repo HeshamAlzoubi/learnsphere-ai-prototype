@@ -51,7 +51,11 @@ public class DemoAccessPolicy {
         OAuth2TokenValidator<Jwt> audienceValidator = jwt -> jwt.getAudience().contains(audience)
             ? OAuth2TokenValidatorResult.success()
             : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Invalid audience", null));
-        return new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(issuer), audienceValidator);
+        OAuth2TokenValidator<Jwt> subjectValidator = jwt -> StringUtils.hasText(jwt.getSubject())
+            ? OAuth2TokenValidatorResult.success()
+            : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Missing subject", null));
+        return new DelegatingOAuth2TokenValidator<>(
+            JwtValidators.createDefaultWithIssuer(issuer), audienceValidator, subjectValidator);
     }
 
     @Bean

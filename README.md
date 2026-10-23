@@ -44,3 +44,7 @@ Full-Spring HTTP regression tests confirm protected identity routes remain close
 ## Milestone 19 — signed JWT role-claim verification
 
 Expanded signed-token HTTP tests cover exact role matching, malformed role-claim types, and separation between administrator/educator account access and learner-only history. See [Milestone 19 verification notes](docs/MILESTONE_19_JWT_ROLE_CLAIM_VERIFICATION.md). This is synthetic security regression coverage, not live authentication.
+
+## Milestone 20 — JWT subject validation
+
+Signed identity tokens must carry a nonblank `sub` claim. See [Milestone 20 subject validation](docs/MILESTONE_20_JWT_SUBJECT_VALIDATION.md) for synthetic HTTP regression coverage and limitations.
