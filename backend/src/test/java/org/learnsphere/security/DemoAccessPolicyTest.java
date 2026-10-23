@@ -9,7 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** Execution requires a full Maven/Spring context; NOT yet executed. */
+/** Full Spring security regression tests; executed by the backend CI workflow. */
 @SpringBootTest @AutoConfigureMockMvc
 class DemoAccessPolicyTest {
     @Autowired MockMvc mvc;
@@ -29,6 +29,24 @@ class DemoAccessPolicyTest {
     }
     @Test void administratorEndpointIsForbidden() throws Exception {
         mvc.perform(get("/api/v1/admin/users")).andExpect(status().isForbidden());
+    }
+    @Test void protectedIdentityEndpointsStayClosedByDefault() throws Exception {
+        mvc.perform(get("/api/v1/account/me")).andExpect(status().isForbidden())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+        mvc.perform(get("/api/v1/learner/me/attempts")).andExpect(status().isForbidden())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+    @Test void suppliedBearerTokenCannotBypassDisabledIdentityMode() throws Exception {
+        mvc.perform(get("/api/v1/account/me")
+                .header("Authorization", "Bearer synthetic-untrusted-token"))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/learner/me/attempts")
+                .header("Authorization", "Bearer synthetic-untrusted-token"))
+            .andExpect(status().isForbidden());
+    }
+    @Test void publicDemoDoesNotExposeProtectedIdentityRoutes() throws Exception {
+        mvc.perform(get("/api/v1/demo-progress")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/account/me")).andExpect(status().isForbidden());
     }
     @Test void unknownWriteEndpointIsForbidden() throws Exception {
         mvc.perform(post("/api/v1/lessons").contentType(MediaType.APPLICATION_JSON).content("{}"))
