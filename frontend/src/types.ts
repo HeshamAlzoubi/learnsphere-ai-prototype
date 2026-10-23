@@ -7,3 +7,13 @@ export interface SubmissionResponse { assessmentId: string; correct: number; tot
 
 export interface LessonProgress { lessonId: string; lessonTitle: string; attemptCount: number; latestPercentage: number|null; latestRecommendation: string|null; suggestedAction: string; recentTrend: 'INSUFFICIENT_DATA'|'IMPROVING'|'DECLINING'|'UNCHANGED' }
 export interface DemoProgress { totalAttempts: number; lessons: LessonProgress[] }
+
+/** Only the authenticated learner's synthetic assessment history. */
+export interface LearnerAttempt {
+  assessmentId: string;
+  correct: number;
+  total: number;
+  percentage: number;
+  recommendation: string;
+  createdAt: string;
+}
