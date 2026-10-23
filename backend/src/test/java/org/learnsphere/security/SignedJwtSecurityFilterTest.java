@@ -83,6 +83,15 @@ class SignedJwtSecurityFilterTest {
             .andExpect(jsonPath("$.subject").value("synthetic-signed-learner"));
     }
 
+    @Test void accountIdentityResponseIsNotCacheable() throws Exception {
+        mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + validToken()))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+        mvc.perform(get("/api/v1/account/me"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
     @Test void wrongAudienceRejected() throws Exception {
         String token = signedToken(TRUSTED_KEY, ISSUER, "different-api",
                 Instant.now().plusSeconds(600), List.of("LEARNER"));

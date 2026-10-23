@@ -32,3 +32,7 @@ A trusted identity provider, configured JWT issuer/audience and role mappings, e
 ## Milestone 16 — identity readiness
 
 The signed-JWT authorization regression suite and the trusted-provider integration contract are documented in [Milestone 16 identity readiness](docs/MILESTONE_16_IDENTITY_READINESS.md). No live sign-in provider is connected; production identity and learner provisioning remain separate dependencies.
+
+## Milestone 17 — private account cache protection
+
+Protected account identity responses now receive the same server-side no-store cache headers as private learner history. See [Milestone 17 verification notes](docs/MILESTONE_17_ACCOUNT_CACHE_PROTECTION.md). This does not introduce live sign-in or real learner records.
