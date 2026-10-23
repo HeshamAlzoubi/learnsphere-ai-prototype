@@ -35,7 +35,7 @@ class JwtIdentityBoundaryTest {
 
     @Test void unrecognizedRoleIsRejected() throws Exception {
         mvc.perform(get("/api/v1/account/me").with(jwt().jwt(j -> j.subject("synthetic-guest")
-                .claim("roles", List.of("GUEST"))).authorities())
+                .claim("roles", List.of("GUEST"))).authorities()))
             .andExpect(status().isForbidden());
     }
 
