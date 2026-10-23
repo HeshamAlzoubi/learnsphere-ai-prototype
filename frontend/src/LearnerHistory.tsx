@@ -11,15 +11,17 @@ export function LearnerHistory({ accessToken }: { accessToken: string | null }) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const generation = useRef(0);
+  const activeRequest = useRef<AbortController | null>(null);
   const token = accessToken?.trim() || null;
 
   useEffect(() => {
     // Discard any in-flight response when identity changes or component unmounts.
     generation.current += 1;
+    activeRequest.current?.abort();
     setHistory(null);
     setError('');
     setLoading(false);
-    return () => { generation.current += 1; };
+    return () => { generation.current += 1; activeRequest.current?.abort(); };
   }, [token]);
 
   async function loadHistory() {
@@ -29,12 +31,15 @@ export function LearnerHistory({ accessToken }: { accessToken: string | null }) 
       setError('Sign in is required to view your assessment history.');
       return;
     }
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
     const requestGeneration = ++generation.current;
     setLoading(true);
     setError('');
     setHistory(null);
     try {
-      const attempts = await api.ownAttempts(currentToken);
+      const attempts = await api.ownAttempts(currentToken, controller.signal);
       if (generation.current === requestGeneration) {
         setHistory({ token: currentToken, attempts });
       }
