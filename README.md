@@ -40,3 +40,7 @@ Protected account identity responses now receive the same server-side no-store c
 ## Milestone 18 — default-deny verification
 
 Full-Spring HTTP regression tests confirm protected identity routes remain closed by default, including when supplied an arbitrary bearer token, while the synthetic demo stays accessible. See [Milestone 18 verification](docs/MILESTONE_18_DEFAULT_DENY_VERIFICATION.md).
+
+## Milestone 19 — signed JWT role-claim verification
+
+Expanded signed-token HTTP tests cover exact role matching, malformed role-claim types, and separation between administrator/educator account access and learner-only history. See [Milestone 19 verification notes](docs/MILESTONE_19_JWT_ROLE_CLAIM_VERIFICATION.md). This is synthetic security regression coverage, not live authentication.
