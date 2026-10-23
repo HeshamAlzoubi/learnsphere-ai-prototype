@@ -16,7 +16,7 @@ export const api = {
   /** Caller supplies a trusted identity-provider access token; never store it in browser storage. */
   ownAttempts: (accessToken: string, signal?: AbortSignal) => {
     if (!accessToken || !accessToken.trim()) throw new ApiError('Sign in is required to view learner history.', 401);
-    return request<LearnerAttempt[]>('/learner/me/attempts', { signal, headers: { Authorization: `Bearer ${accessToken}` } });
+    return request<LearnerAttempt[]>('/learner/me/attempts', { signal, cache: 'no-store', headers: { Authorization: `Bearer ${accessToken}`, 'Cache-Control': 'no-store' } });
   },
   lessons: () => request<Lesson[]>('/lessons'),
   lesson: (id: string) => request<Lesson>(`/lessons/${encodeURIComponent(id)}`),
