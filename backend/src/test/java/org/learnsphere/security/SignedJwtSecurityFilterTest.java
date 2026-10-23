@@ -118,6 +118,29 @@ class SignedJwtSecurityFilterTest {
             .andExpect(status().isForbidden());
     }
 
+    @Test void missingBearerTokenCannotAccessAccountOrLearnerHistory() throws Exception {
+        mvc.perform(get("/api/v1/account/me")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/learner/me/attempts")).andExpect(status().isUnauthorized())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+    @Test void educatorCannotReadLearnerHistory() throws Exception {
+        String token = signedToken(TRUSTED_KEY, ISSUER, AUDIENCE,
+                Instant.now().plusSeconds(600), List.of("EDUCATOR"));
+        mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.roles[0]").value("EDUCATOR"));
+        mvc.perform(get("/api/v1/learner/me/attempts").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+    @Test void learnerHistoryDenialIsNotCacheable() throws Exception {
+        mvc.perform(get("/api/v1/learner/me/attempts").header("Authorization", "Bearer " + validToken()))
+            .andExpect(status().isForbidden())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
     @Test void validSignedLearnerWithNoDatabaseBindingForbidden() throws Exception {
         mvc.perform(get("/api/v1/learner/me/attempts").header("Authorization", "Bearer " + validToken()))
             .andExpect(status().isForbidden());

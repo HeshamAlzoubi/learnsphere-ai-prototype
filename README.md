@@ -28,3 +28,7 @@ LearnSphere AI is a developing educational prototype for grades 6–8. The repos
 ## Next dependencies
 
 A trusted identity provider, configured JWT issuer/audience and role mappings, end-to-end authenticated sessions, secure hosting, operational monitoring, accessibility review, and student-data governance require separate implementation and verification before any real learner rollout.
+
+## Milestone 16 — identity readiness
+
+The signed-JWT authorization regression suite and the trusted-provider integration contract are documented in [Milestone 16 identity readiness](docs/MILESTONE_16_IDENTITY_READINESS.md). No live sign-in provider is connected; production identity and learner provisioning remain separate dependencies.
