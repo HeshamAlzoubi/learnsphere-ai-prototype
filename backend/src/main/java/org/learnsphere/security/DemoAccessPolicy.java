@@ -9,6 +9,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.util.StringUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.SecurityFilterChain;
 import java.util.List;
 
@@ -20,6 +31,22 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class DemoAccessPolicy {
+    @Bean
+    @Lazy
+    JwtDecoder trustedJwtDecoder(
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") String issuer,
+            @Value("${learnsphere.identity.audience:}") String audience) {
+        if (!StringUtils.hasText(issuer) || !StringUtils.hasText(audience)) {
+            throw new IllegalStateException("Identity requires a trusted issuer URI and a nonempty expected audience");
+        }
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withIssuerLocation(issuer).build();
+        OAuth2TokenValidator<Jwt> audienceValidator = jwt -> jwt.getAudience().contains(audience)
+            ? OAuth2TokenValidatorResult.success()
+            : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Invalid audience", null));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(issuer), audienceValidator));
+        return decoder;
+    }
+
     @Bean
     SecurityFilterChain demoSecurityFilterChain(
             HttpSecurity http,
@@ -38,6 +65,8 @@ public class DemoAccessPolicy {
                     "/api/v1/demo-progress").permitAll();
                 auth.requestMatchers(HttpMethod.POST, "/api/v1/assessments/*/submissions").permitAll();
                 if (identityEnabled) {
+                    auth.requestMatchers(HttpMethod.GET, "/api/v1/learner/me/attempts")
+                        .hasRole("LEARNER");
                     auth.requestMatchers(HttpMethod.GET, "/api/v1/account/me")
                         .hasAnyRole("LEARNER", "EDUCATOR", "ADMIN");
                 }
