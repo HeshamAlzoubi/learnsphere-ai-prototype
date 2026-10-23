@@ -38,7 +38,7 @@ describe('API client response handling', () => {
  it('does not request learner data without an access token', async () => {
   const fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
-  await expect(api.ownAttempts('')).rejects.toMatchObject({ status: 401 });
+  expect(() => api.ownAttempts('')).toThrowError(ApiError);
   expect(fetchMock).not.toHaveBeenCalled();
  });
  it('shows safe access-denied messaging for learner history', async () => {
