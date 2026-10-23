@@ -45,6 +45,16 @@ describe('API client response handling', () => {
    headers: expect.objectContaining({ Authorization: 'Bearer synthetic-access-token' })
   }));
  });
+ it('does not misreport a cancelled protected request as a service outage', async () => {
+  const controller = new AbortController();
+  const abortError = new DOMException('The request was aborted', 'AbortError');
+  const fetchMock = vi.fn().mockImplementation(() => {
+   controller.abort();
+   return Promise.reject(abortError);
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  await expect(api.ownAttempts('synthetic-access-token', controller.signal)).rejects.toBe(abortError);
+ });
  it('does not request learner data without an access token', async () => {
   const fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
