@@ -1,15 +1,30 @@
-# LearnSphere AI — Increment 11 (verification hardening)
+# LearnSphere AI — Middle-school learning prototype
 
-This package includes the full Increment 10 source plus a narrow correctness fix for `AssessmentResult` and a dependency-free JDK verification script.
+LearnSphere AI is a developing educational prototype for grades 6–8. The repository contains a Java 21 / Spring Boot backend, React / TypeScript frontend, MySQL migration support, and automated verification. It is **not a deployed student-facing service** and must not be used with real student data.
 
-## Run now (no Maven required)
+## Run and verify
 
-From the project root, run `python tools/verify_core.py` with JDK 21 on PATH. This verifies the scoring core only; it does **not** compile Spring Boot or validate MySQL/React.
+- Backend: `cd backend && mvn -B clean verify` (JDK 21; local MySQL configuration required for runtime).
+- Frontend: `cd frontend && npm ci && npm run typecheck && npm test && npm run build`.
+- Browser E2E and MySQL integration run in GitHub Actions workflows; see `.github/workflows/`.
+- Core-only JDK check: `python tools/verify_core.py` (does not verify Spring Boot, MySQL, or React).
+- Local backend binds to `127.0.0.1:8080` by default; Vite frontend uses `127.0.0.1:5173` with an API proxy.
 
-## Full verification when tools are available
+## Current security boundary (Milestones 14–15)
 
-- `cd backend && mvn -B clean verify`
-- `cd frontend && npm install --no-audit --no-fund && npm run typecheck && npm test && npm run build`
-- Run real MySQL migration and end-to-end tests separately.
+- The **shared demo** is not a learner identity. Demo progress is not private learner history.
+- The learner-history screen is signed-out by default. A trusted identity provider is **not yet integrated**; no token-entry UI, localStorage token storage, or production login is provided.
+- Protected learner history requests accept a token only from the application's trusted caller and use `Authorization: Bearer`, cancellation signals, and `cache: 'no-store'`.
+- Session changes cancel stale history requests and prevent old responses from being displayed.
+- The backend's `PrivateLearnerCacheFilter` applies `Cache-Control: no-store` and `Pragma: no-cache` to `/api/v1/learner` responses, including protected history.
+- These controls are defense-in-depth, **not** proof of production authentication, deployment readiness, or FERPA compliance.
 
-No real student data; no public deployment.
+## Milestone verification
+
+- Milestone 14: learner dashboard separation, session-scoped history and stale-request cancellation; see merged pull requests and CI records.
+- Milestone 15: Gate A cancellation error isolation; Gate B frontend no-store requests; Gate C server-side no-store responses; Gate D documentation and closeout.
+- Pull requests must pass applicable automated checks before merging. CI passing does not replace security review, real identity-provider configuration, or deployment testing.
+
+## Next dependencies
+
+A trusted identity provider, configured JWT issuer/audience and role mappings, end-to-end authenticated sessions, secure hosting, operational monitoring, accessibility review, and student-data governance require separate implementation and verification before any real learner rollout.
