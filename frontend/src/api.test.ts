@@ -35,6 +35,15 @@ describe('API client response handling', () => {
    headers: expect.objectContaining({ Authorization: 'Bearer synthetic-access-token' })
   }));
  });
+ it('disables browser caching for private learner history requests', async () => {
+  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
+  vi.stubGlobal('fetch', fetchMock);
+  await api.ownAttempts('synthetic-access-token');
+  expect(fetchMock).toHaveBeenCalledWith('/api/v1/learner/me/attempts', expect.objectContaining({
+   cache: 'no-store',
+   headers: expect.objectContaining({ Authorization: 'Bearer synthetic-access-token', 'Cache-Control': 'no-store' })
+  }));
+ });
  it('forwards an AbortSignal to the protected learner history request', async () => {
   const controller = new AbortController();
   const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
