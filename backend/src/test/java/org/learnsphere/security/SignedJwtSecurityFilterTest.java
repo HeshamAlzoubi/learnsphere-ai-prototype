@@ -58,7 +58,7 @@ class SignedJwtSecurityFilterTest {
         }
     }
 
-    private String signedToken(RSAKey key, String issuer, String audience, Instant expiresAt, List<String> roles)
+    private String signedToken(RSAKey key, String issuer, String audience, Instant expiresAt, Object roles)
             throws Exception {
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .issuer(issuer)
@@ -142,6 +142,49 @@ class SignedJwtSecurityFilterTest {
         mvc.perform(get("/api/v1/learner/me/attempts").header("Authorization", "Bearer " + token))
             .andExpect(status().isForbidden())
             .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+
+    @Test void administratorCannotReadLearnerHistory() throws Exception {
+        String token = signedToken(TRUSTED_KEY, ISSUER, AUDIENCE,
+                Instant.now().plusSeconds(600), List.of("ADMIN"));
+        mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/learner/me/attempts").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
+
+    @Test void roleClaimMustBeAListNotAString() throws Exception {
+        String token = signedToken(TRUSTED_KEY, ISSUER, AUDIENCE,
+                Instant.now().plusSeconds(600), "LEARNER");
+        mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test void unrecognizedAndCaseVariantRolesDoNotGrantAccess() throws Exception {
+        for (String role : List.of("learner", "ROLE_LEARNER", "GUEST")) {
+            String token = signedToken(TRUSTED_KEY, ISSUER, AUDIENCE,
+                    Instant.now().plusSeconds(600), List.of(role));
+            mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test void numericRoleClaimDoesNotGrantAccess() throws Exception {
+        String token = signedToken(TRUSTED_KEY, ISSUER, AUDIENCE,
+                Instant.now().plusSeconds(600), List.of(42));
+        mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test void mixedClaimDoesNotElevateAnUnrecognizedRole() throws Exception {
+        String token = signedToken(TRUSTED_KEY, ISSUER, AUDIENCE,
+                Instant.now().plusSeconds(600), List.of("GUEST", 42, "EDUCATOR"));
+        mvc.perform(get("/api/v1/account/me").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/learner/me/attempts").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
     }
 
     @Test void learnerHistoryDenialIsNotCacheable() throws Exception {
