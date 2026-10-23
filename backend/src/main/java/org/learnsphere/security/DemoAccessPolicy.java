@@ -19,14 +19,13 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.util.StringUtils;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.SecurityFilterChain;
 import java.util.List;
 
 /**
  * Local synthetic demo remains public. Optional identity endpoint requires a JWT
  * validated by a configured trusted issuer; disabled by default.
- * No learner data routes or registration endpoints are enabled.
+ * Only read-only synthetic self-service is enabled; no registration endpoints.
  */
 @Configuration
 @EnableWebSecurity
@@ -40,11 +39,19 @@ public class DemoAccessPolicy {
             throw new IllegalStateException("Identity requires a trusted issuer URI and a nonempty expected audience");
         }
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withIssuerLocation(issuer).build();
+        decoder.setJwtValidator(issuerAudienceValidator(issuer, audience));
+        return decoder;
+    }
+
+    /** Shared by the production decoder and local signed-token security tests. */
+    public static OAuth2TokenValidator<Jwt> issuerAudienceValidator(String issuer, String audience) {
+        if (!StringUtils.hasText(issuer) || !StringUtils.hasText(audience)) {
+            throw new IllegalArgumentException("Issuer and audience are required");
+        }
         OAuth2TokenValidator<Jwt> audienceValidator = jwt -> jwt.getAudience().contains(audience)
             ? OAuth2TokenValidatorResult.success()
             : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Invalid audience", null));
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(issuer), audienceValidator));
-        return decoder;
+        return new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(issuer), audienceValidator);
     }
 
     @Bean
