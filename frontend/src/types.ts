@@ -5,5 +5,5 @@ export interface Assessment { id: string; lessonId: string; title: string; quest
 export interface Answer { questionId: string; optionId: string }
 export interface SubmissionResponse { assessmentId: string; correct: number; total: number; percentage: number; recommendation: string }
 
-export interface LessonProgress { lessonId: string; lessonTitle: string; attemptCount: number; latestPercentage: number|null; latestRecommendation: string|null; suggestedAction: string }
+export interface LessonProgress { lessonId: string; lessonTitle: string; attemptCount: number; latestPercentage: number|null; latestRecommendation: string|null; suggestedAction: string; recentTrend: 'INSUFFICIENT_DATA'|'IMPROVING'|'DECLINING'|'UNCHANGED' }
 export interface DemoProgress { totalAttempts: number; lessons: LessonProgress[] }

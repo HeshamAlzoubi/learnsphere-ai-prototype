@@ -34,6 +34,7 @@ test('learner can complete a lesson and see persisted demo progress', async ({ p
   await expect(progressCard).toBeVisible();
   await expect(progressCard.getByText(/Attempts: [1-9][0-9]*/)).toBeVisible();
   await expect(progressCard.getByText(/Latest score: [0-9]+%/)).toBeVisible();
+  await expect(progressCard.getByText(/Recent score trend: (Not enough attempts|Improving|Declining|Unchanged)/)).toBeVisible();
 });
 
 test('learner can return from a lesson without submitting', async ({ page }) => {
