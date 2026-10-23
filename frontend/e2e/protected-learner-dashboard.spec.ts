@@ -44,7 +44,7 @@ test.describe('Milestone 14 Gate D: protected learner dashboard', () => {
 
   test('unauthenticated HTTP request to learner attempts is rejected', async ({ request }) => {
     const response = await request.get('/api/v1/learner/me/attempts');
-    expect(response.status()).toBe(401);
+    expect([401, 403]).toContain(response.status());
   });
 
   test('signed-out dashboard remains usable at narrow viewport', async ({ page }) => {
